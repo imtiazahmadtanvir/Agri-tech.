@@ -1,167 +1,147 @@
 "use client";
-import LocationModal from "@/components/modal/LocationModal";
+
+import { useState, useEffect } from "react";
+import { RotateCcw } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { productCategories } from "@/lib/productCategory";
 import { useMarketPlace } from "@/context/MarketplaceContext";
-import Link from "next/link";
-import React, { useState } from "react";
-import { FaLocationDot } from "react-icons/fa6";
-import { IoAdd } from "react-icons/io5";
+import { FiArrowRight } from "react-icons/fi";
+import { useDebounce } from "use-debounce";
 
 export default function Sidebar() {
-  const {
-    pathname,
-    setMaxPrice,
-    setMinPrice,
-    setSelectedCategories,
-    maxPrice,
-    minPrice,
-    setLocation,
-    location,
-  } = useMarketPlace();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { replace } = useRouter();
+  const { setCategory, setMaxPrice, setMinPrice } = useMarketPlace();
+  const category = searchParams.get("category")?.toString();
 
-  const marketplaceCategories = [
-    { name: "crops", emoji: "🌾" },
-    { name: "livestock", emoji: "🐄" },
-    { name: "Seeds & Plants", emoji: "🌱" },
-    { name: "fertilizers", emoji: "💧" },
-    { name: "equipment", emoji: "🛠️" },
-    { name: "pesticides", emoji: "🌿" },
-    { name: "Animal Feed", emoji: "🐾" },
-    { name: "fisheries", emoji: "🐟" },
-  ];
-  const restFiler = () => {
-    setMaxPrice("");
+  const [min, setMin] = useState("");
+  const [max, setMax] = useState("");
+  const [error, setError] = useState("");
+  const [maxDebounce] = useDebounce(max, 300);
+  useEffect(() => {
+    const minVal = parseFloat(min) || 1;
+    const maxVal = parseFloat(maxDebounce);
+    if (maxDebounce) {
+      if (minVal >= maxVal) {
+        setError("Min price must be less than Max price");
+      } else {
+        setError("");
+        setMinPrice(min);
+        setMaxPrice(maxDebounce);
+      }
+    } else {
+      setMinPrice("");
+      setMaxPrice("");
+      setError("");
+    }
+  }, [min, max, setMinPrice, setMaxPrice, maxDebounce]);
+
+  const handleReset = () => {
+    setMin("");
+    setMax("");
     setMinPrice("");
-    setSelectedCategories("");
-    setLocation("all location");
+    setMaxPrice("");
+    setError("");
+  };
+  const handelAllProduct = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    setCategory("");
+    params.delete("category");
+    replace(`${pathname}?${params.toString()}`);
   };
   return (
-    <aside className=" h-fit sticky top-0  left-0 my-4 p-3 shadow-md rounded-lg bg-green-50">
-      <h3 className="text-xl font-bold mb-4 text-green-700">
-        Agriculture Marketplace
-      </h3>
-
-      {/* Navigation Buttons */}
-      <div className="space-y-2">
-        <Link
-          href="/marketplace"
-          className={`w-full py-2 px-3 text-left border rounded-md flex items-center hover:bg-green-700 hover:text-white ${
-            pathname === "/marketplace" ? "bg-green-700 text-white" : "bg-white"
-          }`}
-        >
-          All Products
-        </Link>
-
-        <Link
-          href="/marketplace/inbox"
-          className={`w-full py-2 px-3 text-left border rounded-md flex items-center hover:bg-green-700 hover:text-white ${
-            pathname === "/marketplace/inbox"
-              ? "bg-green-700 text-white"
-              : "bg-white"
-          }`}
-        >
-          Inbox
-        </Link>
-
-        <Link
-          href="/marketplace/myListing"
-          className={`w-full py-2 px-3 text-left border rounded-md flex items-center hover:bg-green-700 hover:text-white ${
-            pathname === "/marketplace/myListing"
-              ? "bg-green-700 text-white"
-              : "bg-white"
-          }`}
-        >
-          My Listing
-        </Link>
-
-        {/* Create Listing Button */}
-        <Link
-          href={"/marketplace/create"}
-          className={`w-full py-2 px-3 text-center border rounded-md flex items-center justify-center gap-2 hover:bg-green-700 hover:text-white ${
-            pathname === "/marketplace/create"
-              ? "bg-green-700 text-white"
-              : "bg-white"
-          }`}
-        >
-          <IoAdd /> Create Listing
-        </Link>
-      </div>
-
-      {/* Location Selector */}
-      <div className={`${pathname !== "/marketplace" ? "hidden" : ""}`}>
-        {/* Price Filters */}
-        <div className="mt-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
-
-            <button
-              onClick={restFiler}
-              className="text-blue-500 cursor-pointer"
-            >
-              Clear
-            </button>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold text-gray-700">Location</h3>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="w-full cursor-pointer flex justify-center gap-1 items-center py-2 mt-2 border rounded-md bg-white hover:bg-green-100"
-            >
-              <span className="text-yellow-500">
-                <FaLocationDot />
-              </span>
-              <span className="capitalize">{location}</span>
-            </button>
-            <LocationModal
-              setLocation={setLocation}
-              isOpen={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-            ></LocationModal>
-          </div>
-          <div className="flex gap-2 mt-2">
-            <input
-              onChange={(e) => {
-                const value = Math.max(0, Number(e.target.value));
-                if (value <= Number(maxPrice) || maxPrice === "") {
-                  setMinPrice(value);
-                }
-              }}
-              className="w-1/2 border p-2 rounded-md [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-              type="number"
-              placeholder="Min Price"
-            />
-
-            <input
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                if (value >= Number(minPrice) || minPrice === "") {
-                  setMaxPrice(value);
-                }
-              }}
-              className="w-1/2 border p-2 rounded-md [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-              type="number"
-              placeholder="Max Price"
-            />
-          </div>
-        </div>
-
-        {/* Categories */}
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold text-gray-700">Categories</h3>
-          <div className="space-y-2 mt-2">
-            {marketplaceCategories.map(({ name, emoji }) => (
-              <button
-                key={name}
-                onClick={() => setSelectedCategories(name)}
-                className="w-full py-2 px-3 text-left border rounded-md bg-white hover:bg-green-100 flex items-center gap-2"
+    <aside className="h-fit sticky mt-4 top-0 left-0">
+      {/* Category Section */}
+      <div className="border rounded-2xl">
+        <h3 className="bg-[#0D401C] text-lg rounded-t-2xl border py-3.5 text-white border-[#0D401C] font-bold lg:px-5 hidden lg:block">
+          Categories
+        </h3>
+        <div className="flex whitespace-nowrap  flex-row px-2 lg:px-6 pb-1 lg:flex-col overflow-x-auto no-scrollbar text-left space-x-4 lg:space-x-0 lg:space-y-2">
+          <button
+            onClick={handelAllProduct}
+            className={`group cursor-pointer py-3.5 px-2 text-left  lg:w-full hover:pl-6 border-dashed 
+              hover:text-green-700 
+              ${category ? "" : "text-green-700 pl-6"}
+              transition-all duration-300  lg:border-b`}
+          >
+            <span className="relative whitespace-nowrap">
+              <span
+                className={`absolute left-[-20px] opacity-0 transform -translate-x-2 group-hover:opacity-100 group-hover:-translate-x-1 transition-all translate-y-1 duration-300 text-[#F8C32C] ${
+                  category ? "" : "opacity-100 -translate-x-1"
+                }`}
               >
-                {emoji}
-                {name}
-              </button>
-            ))}
-          </div>
+                <FiArrowRight />
+              </span>
+              All Product
+            </span>
+          </button>
+
+          {productCategories.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setCategory(item.name)}
+              className={`group cursor-pointer py-3.5 px-2 text-left w-full border-dashed 
+                hover:pl-6
+                hover:text-green-700  
+                ${category === item.name ? "text-green-700 pl-6" : ""} 
+                transition-all duration-300 ${item.id !== 10 && "lg:border-b"}`}
+            >
+              <span className="relative">
+                <span
+                  className={`absolute left-[-20px] opacity-0 transform -translate-x-2 group-hover:opacity-100 group-hover:-translate-x-1 transition-all translate-y-1 duration-300 text-[#F8C32C] ${
+                    category === item.name ? "opacity-100 -translate-x-1" : ""
+                  }`}
+                >
+                  <FiArrowRight />
+                </span>
+                {item.name}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* Price Filter Section */}
+      <div className="border pb-5 rounded-2xl mt-6">
+        <h4 className="bg-[#0D401C] text-lg rounded-t-2xl border py-3.5 text-white border-[#0D401C] font-bold px-5">
+          Filter by Price
+        </h4>
+        <div className="px-7 pt-6 flex items-center gap-2">
+          <input
+            type="number"
+            placeholder="min"
+            value={min}
+            onChange={(e) => setMin(e.target.value)}
+            className="border w-full border-gray-300 rounded px-2 py-1 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          />
+          <p>To</p>
+          <input
+            type="number"
+            placeholder="max"
+            value={max}
+            onChange={(e) => setMax(e.target.value)}
+            className="border w-full border-gray-300 rounded px-2 py-1 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          />
+          <button
+            onClick={handleReset}
+            className="bg-gray-300 text-black px-2 py-1 rounded cursor-pointer flex items-center gap-1"
+          >
+            <RotateCcw size={18} />
+          </button>
+        </div>
+        {error && (
+          <p className="text-red-500 text-center text-xs px-7">{error}</p>
+        )}
+      </div>
+
+      {/* Popular Products Placeholder */}
+      {/* <div className="mt-6 border rounded-2xl">
+        <h4 className="bg-[#0D401C] text-lg rounded-t-2xl border py-3.5 text-white border-[#0D401C] font-bold px-5">
+          Popular Products
+        </h4>
+        <div className="px-7 pb-3"></div>
+      </div> */}
     </aside>
   );
 }

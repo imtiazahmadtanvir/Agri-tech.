@@ -1,3 +1,5 @@
+import { FieldErrors, UseFormRegister } from "react-hook-form";
+
 export type WeatherData = {
     coord: {
         lon: number;
@@ -96,6 +98,9 @@ export interface FormData {
     // Category-specific fields
     cropType?: string;
     fertilizerType?: string;
+    livestockType?: string;
+    plantType?: string;
+    fisheriesType?: string;
     equipmentType?: string;
     pesticideType?: string;
     harvestDate?: string;
@@ -133,4 +138,37 @@ export interface FormData {
     isNegotiable?: boolean;
     expiryData?: string;
     type?: string
+}
+export interface IFormInput {
+    productName: string;
+    category: string;
+    stock: number;
+    description: string;
+    price: number;
+    discountedPrice: number;
+    unit: string;
+}
+export interface TagsProps {
+    tags: string[];
+    setTags: React.Dispatch<React.SetStateAction<string[]>>;
+    register: UseFormRegister<IFormInput>
+    errors: FieldErrors<IFormInput>
+
+}
+export interface Product {
+    _id: string;
+    productName: string;
+    category: string;
+    stock: string;
+    unit: string;
+    description: string;
+    price: string;
+    discountedPrice?: string;
+    photoUrls: string[];
+    tags: string[];
+    userName: string;
+    userEmail: string;
+    userImage: string;
+    listed: string;
+    verifyStatus: boolean;
 }
