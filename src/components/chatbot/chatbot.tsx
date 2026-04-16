@@ -43,7 +43,7 @@ export default function Chatbot() {
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || "AIzaSyDS1UScOoCOAKLe22DTgcFui9bJlKyjnEQ";
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY ;
   const MODEL_NAME = "gemini-2.0-flash"
 
   const predefinedQuestions = [
